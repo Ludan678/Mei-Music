@@ -1,7 +1,7 @@
 ﻿<Window  x:Class="Mei_Music.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Mei Music" Height="450" Width="800"
+        Title="Mei Music" Height="500" Width="900"
         Deactivated="Window_Deactivated"
          WindowStartupLocation="CenterScreen"
         WindowStyle="None"
@@ -69,18 +69,20 @@
         </Style>
 
         <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}"/>
+
     </Window.Resources>
-    
-    
+
+
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Custom Title Bar -->
-        <Border Background="#181821" Grid.Row="0" Height="25" MouseDown="TitleBar_MouseDown">
+        <Border Background="#181821" Grid.Row="0" Height="40" MouseDown="TitleBar_MouseDown">
             <DockPanel VerticalAlignment="Center">
 
                 <!--Mei Music Icon-->
@@ -101,7 +103,7 @@
         <!-- Main Content Area -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="195"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
@@ -196,11 +198,14 @@
                                 </Border>
                             </Popup>
 
-                              
+
                         </Grid>
 
                         <!-- List Box for Uploaded Songs -->
-                        <ListBox x:Name="UploadedSongList" HorizontalContentAlignment="Stretch" Height="auto">
+                        <ListBox x:Name="UploadedSongList" 
+                                 HorizontalContentAlignment="Stretch" 
+                                 Height="auto"
+                                 SelectionChanged="PlaySelectedSong">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid HorizontalAlignment="Stretch">
@@ -208,11 +213,11 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        
+
                                         <!-- Song Name -->
                                         <TextBlock Text="{Binding}" 
                                                    VerticalAlignment="Center" 
-                                                   Margin="5,0,10,0" 
+                                                   Margin="15,0,10,0" 
                                                    Grid.Column="0"/>
 
                                         <!-- Delete Button -->
@@ -224,7 +229,8 @@
                                             Click="DeleteSong_Click" 
                                             Tag="{Binding}" 
                                             Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="1"/>
+                                            Grid.Column="1"
+                                            Margin="0,0,10,0"/>
                                         <!-- Folder Button -->
                                         <Button Content="📂" 
                                             Width="17" 
@@ -235,7 +241,7 @@
                                             Tag="{Binding}" 
                                             Style="{StaticResource CustomButtonStyle}"
                                             Grid.Column="1"
-                                            Margin="0,0,20,0"/>
+                                            Margin="0,0,37,0"/>
 
                                     </Grid>
                                 </DataTemplate>
@@ -246,8 +252,84 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+
+            <Grid Grid.ColumnSpan="2" Height="48"  VerticalAlignment="Bottom" Background="#F5F5F5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Previous Song Button-->
+                    <Button Grid.Column="0" Width="40"  Content="⏮" FontSize="25" 
+                            Margin="25,0,5,0" HorizontalAlignment="Left" 
+                            Style="{StaticResource CustomButtonStyle}"/>
+
+                    <!-- Stop Song Button-->
+                    <Button Grid.Column="1" Width="50" Padding="0,0,0,1" Content="⏸️" FontSize="33" 
+                            Margin="10,0,10,0"
+                            HorizontalAlignment="Center" Style="{StaticResource CustomButtonStyle}"/>
+
+                    <!-- Next Song Button-->
+                    <Button Grid.Column="2" Width="40"  Content="⏭" FontSize="25" 
+                            Margin="5,0,20,0" HorizontalAlignment="Right"
+                            Style="{StaticResource CustomButtonStyle}"/>
+
+                    <Grid Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Label x:Name="SongProgress_Timer" Grid.Column="0" Content="00:00" Margin="0,0,3,0"/>
+                        <Slider Grid.Column="1" 
+                                x:Name="SongProgressSlider" 
+                                MinWidth="100" 
+                                IsMoveToPointEnabled="False"
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Center"
+                                MouseMove="Slider_MouseMove"
+                                PreviewMouseLeftButtonDown="SongProgressSlider_PreviewMouseLeftButtonDown"
+                                PreviewMouseLeftButtonUp="SongProgressSlider_PreviewMouseLeftButtonUp"
+                                ValueChanged="SongProgressSlider_ValueChanged"
+                                IsSelectionRangeEnabled="True"
+                                SelectionStart="0"
+                                SelectionEnd="{Binding Value, ElementName=SongProgressSlider}"
+                                Style="{DynamicResource SongProgressCustomSlider}">
+                        </Slider>
+                        
+                        <Label x:Name="SongLength_Timer" Grid.Column="2" Content="00:00" Margin="5,0,0,0"/>
+                    </Grid>
+
+                    <Label Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Center" 
+                           Content="🔊"/>
+
+                    <Slider x:Name="VolumeSlider" 
+                            Grid.Column="5" 
+                            HorizontalAlignment="Left" 
+                            VerticalAlignment="Center" 
+                            Width="100" 
+                            Margin="0,0,15,0"
+                            MouseMove="Slider_MouseMove"
+                            PreviewMouseLeftButtonDown="Slider_PreviewMouseLeftButtonDown"
+                            PreviewMouseLeftButtonUp="Slider_PreviewMouseLeftButtonUp"
+                            Minimum="0"
+                            Maximum="100"
+                            ValueChanged="VolumeSlider_ValueChanged"
+                            IsSelectionRangeEnabled="True"
+                            SelectionStart="0"
+                            SelectionEnd="{Binding Value, ElementName=VolumeSlider}"
+                            Style="{DynamicResource SongProgressCustomSlider}"/>
+
+                </Grid>
+            </Grid>
+
         </Grid>
     </Grid>
-
 </Window>
 

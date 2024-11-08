@@ -10,22 +10,51 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using System.Diagnostics;
-using System.IO; 
+using System.IO;
+using System.Windows.Threading;
+using AudioSwitcher.AudioApi.CoreAudio;
+
+
 
 namespace Mei_Music
 {
     public partial class MainWindow : Window
     {
+
+        private bool isDragging = false;  // Track whether the slider is being dragged
+        private Slider? currentSlider;    // Reference to the slider being dragged
+        private MediaPlayer mediaPlayer = new MediaPlayer();
+        private DispatcherTimer timer;
+        private CoreAudioDevice? defaultPlaybackDevice;
         public MainWindow()
         {
             InitializeComponent();
-     
+
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Tick += Timer_Tick;
+            timer.Start();
+
+            mediaPlayer.MediaOpened += MediaPlayer_MediaOpened; //detect for opened media
+            mediaPlayer.MediaEnded += MediaPlayer_MediaEnded;   //detect for ended media
+
+            
+            var controller = new CoreAudioController();
+            defaultPlaybackDevice = controller.DefaultPlaybackDevice;
+
+            if (defaultPlaybackDevice != null)
+            {
+                VolumeSlider.Value = defaultPlaybackDevice.Volume; // Set initial value from system volume
+            }
+
+
             string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
             Directory.CreateDirectory(audioDirectory);
 
             RefreshSongsInUI();
             this.PreviewMouseDown += OnMainWindowPreviewMouseDown; //tracks Position of mouse
         }
+
 
         //------------------------- Add Audio Implementation -------------------------------
         private void UploadFromComputer_Click(object sender, RoutedEventArgs e)
@@ -65,7 +94,6 @@ namespace Mei_Music
         {
 
         }
-
         private string ConvertVideoToAudio(string videoFilePath) //perform conversion from video to audio
         {
             try
@@ -104,7 +132,6 @@ namespace Mei_Music
                 throw;
             }
         }
-
         private void AddFileToUI(string filePath)
         {
             string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(filePath); //get file name
@@ -135,7 +162,6 @@ namespace Mei_Music
                 UploadedSongList.Items.Add(fileNameWithoutExtension); //add the file name of the audio path to the viewport list
             }
         }
-
         private void ReplaceFileInUI(string filePath)
         {
             string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(filePath);
@@ -172,7 +198,6 @@ namespace Mei_Music
                 }
             }
         }
-
         private void PlusButton_Click(object sender, RoutedEventArgs e)
         {
             // Open the dropdown and disable the button
@@ -184,11 +209,150 @@ namespace Mei_Music
             SortPopupMenu.IsOpen = true;
             SortButton.IsEnabled = false;
         }
+
         //----------------------------------------------------------------------------------
 
 
 
         //-------------------------  Song Functionality Implementation ---------------------
+        private void MediaPlayer_MediaOpened(object? sender, EventArgs e)
+        {
+            //get info from opened media
+            if (mediaPlayer.NaturalDuration.HasTimeSpan)
+            {
+                TimeSpan totalDuration = mediaPlayer.NaturalDuration.TimeSpan;
+                SongLength_Timer.Content = totalDuration.ToString(@"mm\:ss");
+                SongProgressSlider.Maximum = totalDuration.TotalSeconds;
+            }
+        }
+        private void PlaySelectedSong(object sender, SelectionChangedEventArgs? e)
+        {
+            //click to play a song functionality
+            if (UploadedSongList.SelectedItem != null)
+            {
+                string? selectedFileName = UploadedSongList.SelectedItem.ToString();
+
+                // Build the full path to the audio file in the local storage folder
+                string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
+                string mp3FilePath = System.IO.Path.Combine(audioDirectory, selectedFileName + ".mp3");
+                string wavFilePath = System.IO.Path.Combine(audioDirectory, selectedFileName + ".wav");
+
+                string? audioFilePath = null;
+
+                // Check if the mp3 or wav file exists
+                if (File.Exists(mp3FilePath))
+                    audioFilePath = mp3FilePath;
+                else if (File.Exists(wavFilePath))
+                    audioFilePath = wavFilePath;
+
+                if (audioFilePath != null)
+                {
+                    mediaPlayer.Stop();
+                    mediaPlayer.Open(new Uri(audioFilePath));
+                    mediaPlayer.Play();
+                }
+                else
+                {
+                    MessageBox.Show("The selected file could not be found.");
+                }
+            }
+        }
+        private void MediaPlayer_MediaEnded(object? sender, EventArgs e)
+        {
+            if (UploadedSongList.Items.Count == 0)
+                return;
+            int current_index = UploadedSongList.SelectedIndex;
+            int next_index = (current_index + 1) % UploadedSongList.Items.Count;
+            UploadedSongList.SelectedIndex = next_index;
+            PlaySelectedSong(this, null);
+        }
+        private void Timer_Tick(object? sender, EventArgs e)
+        {
+            //for updating timer value and progress slider
+            if (mediaPlayer.Source != null && mediaPlayer.NaturalDuration.HasTimeSpan && !isDragging)
+            {
+                SongProgressSlider.Value = mediaPlayer.Position.TotalSeconds;
+                SongProgress_Timer.Content = mediaPlayer.Position.ToString(@"mm\:ss");
+                SongLength_Timer.Content = mediaPlayer.NaturalDuration.TimeSpan.ToString(@"mm\:ss");
+            }
+        }
+        private void SetSystemVolume(double volume)
+        {
+            // Helper method to set system volume
+            if (defaultPlaybackDevice != null)
+            {
+                defaultPlaybackDevice.Volume = volume;
+            }
+        }
+        private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!isDragging) // Update volume only when not dragging
+            {
+                SetSystemVolume(VolumeSlider.Value);
+            }
+        }
+        private void SongProgressSlider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Slider_PreviewMouseLeftButtonDown(sender, e);
+            SongProgressSlider.CaptureMouse();
+        }
+        private void SongProgressSlider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            Slider_PreviewMouseLeftButtonUp(sender, e);
+            mediaPlayer.Position = TimeSpan.FromSeconds(SongProgressSlider.Value); // Seek to the selected position
+            SongProgressSlider.ReleaseMouseCapture();
+        }
+        private void SongProgressSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if(isDragging || mediaPlayer.NaturalDuration.HasTimeSpan)
+            {
+                TimeSpan currentTime = TimeSpan.FromSeconds(SongProgressSlider.Value);
+                SongProgress_Timer.Content = currentTime.ToString(@"mm\:ss");
+            }
+        }
+        private void Slider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Event handler for mouse down (start dragging)
+            if (sender is Slider slider)
+            {
+                isDragging = true;
+                currentSlider = slider;
+                MoveSliderToMousePosition(slider, e);
+                slider.CaptureMouse(); // Capture the mouse to receive events outside the bounds
+            }
+        }
+        private void Slider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // Event handler for mouse up (stop dragging)
+            isDragging = false;
+            currentSlider?.ReleaseMouseCapture();
+            currentSlider = null;
+        }
+        private void Slider_MouseMove(object sender, MouseEventArgs e)
+        {
+            // Event handler for mouse move (dragging)
+            if (isDragging && currentSlider != null)
+            {
+                MoveSliderToMousePosition(currentSlider, e);
+                if (currentSlider == VolumeSlider)
+                {
+                    // Update volume in real-time as the slider is dragged
+                    SetSystemVolume(VolumeSlider.Value);
+                }
+            }
+        }
+        private void MoveSliderToMousePosition(Slider slider, MouseEventArgs e)
+        {
+            // Common method to move any slider to the mouse position
+            var mousePosition = e.GetPosition(slider);
+            double percentage = mousePosition.X / slider.ActualWidth;
+            slider.Value = percentage * (slider.Maximum - slider.Minimum) + slider.Minimum;
+            // Update media volume if we're working with VolumeSlider
+            if (slider == VolumeSlider && defaultPlaybackDevice != null)
+            {
+                SetSystemVolume(slider.Value);
+            }
+        }
         private void DeleteSong_Click(object sender, RoutedEventArgs e)
         {
            if (sender is Button deleteSong)
@@ -225,7 +389,6 @@ namespace Mei_Music
                 }
             }
         }
-
         private void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button folderButton)
@@ -278,7 +441,6 @@ namespace Mei_Music
 
             RefreshPlaylist(sortedItems);
         }
-
         private void SortByModification_Click(object sender, RoutedEventArgs e)
         {
             string outputDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
@@ -293,7 +455,6 @@ namespace Mei_Music
 
             RefreshPlaylist(sortedItems);
         }
-
         private void RefreshPlaylist(List<string> sortedItems)
         {
             UploadedSongList.Items.Clear();
@@ -302,7 +463,6 @@ namespace Mei_Music
                 UploadedSongList.Items.Add(item);
             }
         }
-
         private void RefreshSongsInUI()
         {
             // Step 1: Check for any non audio file. Delete them
@@ -403,9 +563,9 @@ namespace Mei_Music
             }
 
         }
-        // Event handler for the Refresh Button
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
+            // Event handler for the Refresh Button
             RefreshSongsInUI();
         }
         //----------------------------------------------------------------------------------
@@ -449,12 +609,10 @@ namespace Mei_Music
                 this.DragMove();
             }
         }
-
         private void Minimize_Click(object sender, RoutedEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
         }
-
         private void Maximize_Click(object sender, RoutedEventArgs e)
         {
             if (this.WindowState == WindowState.Maximized)
@@ -462,11 +620,11 @@ namespace Mei_Music
             else
                 this.WindowState = WindowState.Maximized;
         }
-
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
         }
+
         //----------------------------------------------------------------------------------
     }
 }
