@@ -303,17 +303,19 @@
 
                     <!-- Previous Song Button-->
                     <Button Grid.Column="0" Width="50" FontSize="25" 
-                            Margin="20,0,-5,0" HorizontalAlignment="Left" 
+                            Margin="25,0,-5,0" HorizontalAlignment="Left" 
                             RenderOptions.BitmapScalingMode="Fant"
+                            x:Name="PreviousSongButton"
+                            Click="PreviousSongClicked"
                             Style="{StaticResource PlaySongButtonStyle}">
-                        <Image Source="/Resources/Images/previous_button.png" Width="25" Height="25"/>
+                        <Image Source="/Resources/Images/previous_button.png" Width="45" Height="45"/>
                     </Button>
 
                     <!-- Stop Song Button-->
                     <Button Grid.Column="1" Width="50" Padding="0,0,0,1" FontSize="33" 
                             x:Name="StopSongButton"
                             Click="StopSongClicked"
-                            Margin="10,0,10,0"
+                            Margin="5,0,5,0"
                             RenderOptions.BitmapScalingMode="Fant"
                             HorizontalAlignment="Center" Style="{StaticResource PlaySongButtonStyle}">
                         <Image Source="/Resources/Images/pause_button.png" Width="35" Height="35"/>
@@ -323,8 +325,10 @@
                     <Button Grid.Column="2" Width="50" FontSize="25" 
                             Margin="-5,0,20,0" HorizontalAlignment="Right"
                             RenderOptions.BitmapScalingMode="Fant"
+                            x:Name="NextSongButton"
+                            Click="NextSongClicked"
                             Style="{StaticResource PlaySongButtonStyle}">
-                        <Image Source="/Resources/Images/next_button.png" Width="25" Height="25"/>
+                        <Image Source="/Resources/Images/next_button.png" Width="45" Height="45"/>
                     </Button>
 
                     <Grid Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Stretch">

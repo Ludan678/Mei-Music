@@ -240,18 +240,8 @@ namespace Mei_Music
         //----------------------------------------------------------------------------------
 
 
-
         //-------------------------  Song Functionality Implementation ---------------------
-        private void MediaPlayer_MediaOpened(object? sender, EventArgs e)
-        {
-            //get info from opened media
-            if (mediaPlayer.NaturalDuration.HasTimeSpan)
-            {
-                TimeSpan totalDuration = mediaPlayer.NaturalDuration.TimeSpan;
-                SongLength_Timer.Content = totalDuration.ToString(@"mm\:ss");
-                SongProgressSlider.Maximum = totalDuration.TotalSeconds;
-            }
-        }
+       
         private void PlaySelectedSong(object sender, SelectionChangedEventArgs? e)
         {
             //click to play a song functionality
@@ -287,6 +277,17 @@ namespace Mei_Music
                 }
             }
         }
+        private void PreviousSongClicked(object sender, RoutedEventArgs e)
+        {
+            int current_index = UploadedSongList.SelectedIndex;
+            int previous_index = current_index - 1;
+            if(previous_index < 0)
+            {
+                previous_index = UploadedSongList.Items.Count - 1;
+            }
+            UploadedSongList.SelectedIndex = previous_index;
+            SaveSongIndex();
+        }
         private void StopSongClicked(object sender, RoutedEventArgs e)
         {
             if (UploadedSongList.SelectedItem == null)
@@ -300,9 +301,7 @@ namespace Mei_Music
                 // If currently playing, pause the media
                 mediaPlayer.Pause();
                 isPlaying = false;
-
-                // Change button image to play icon (optional)
-                //((Image)StopSongButton.Content).Source = new BitmapImage(new Uri("Resources/Images/play_button.png", UriKind.Relative));
+                ((Image)StopSongButton.Content).Source = new BitmapImage(new Uri("Resources/Images/play_button.png", UriKind.Relative));
             }
             else
             {
@@ -318,9 +317,24 @@ namespace Mei_Music
                 }
 
                 isPlaying = true;
-
-                // Change button image to pause icon (optional)
-                //((Image)StopSongClickedButton.Content).Source = new BitmapImage(new Uri("Resources/Images/pause_button.png", UriKind.Relative));
+                ((Image)StopSongButton.Content).Source = new BitmapImage(new Uri("Resources/Images/pause_button.png", UriKind.Relative));
+            }
+        }
+        private void NextSongClicked(object sender, RoutedEventArgs e)
+        {
+            int current_index = UploadedSongList.SelectedIndex;
+            int next_index = (current_index + 1) % UploadedSongList.Items.Count;
+            UploadedSongList.SelectedIndex = next_index;
+            SaveSongIndex();
+        }
+        private void MediaPlayer_MediaOpened(object? sender, EventArgs e)
+        {
+            //get info from opened media
+            if (mediaPlayer.NaturalDuration.HasTimeSpan)
+            {
+                TimeSpan totalDuration = mediaPlayer.NaturalDuration.TimeSpan;
+                SongLength_Timer.Content = totalDuration.ToString(@"mm\:ss");
+                SongProgressSlider.Maximum = totalDuration.TotalSeconds;
             }
         }
         private void MediaPlayer_MediaEnded(object? sender, EventArgs e)
@@ -342,6 +356,103 @@ namespace Mei_Music
                 SongLength_Timer.Content = mediaPlayer.NaturalDuration.TimeSpan.ToString(@"mm\:ss");
             }
         }
+        private void DeleteSong_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button deleteSong && deleteSong.Tag is Song song)
+            {
+                string? fileNameWithoutExtension = song.Name;
+
+                if (string.IsNullOrEmpty(fileNameWithoutExtension)) return;
+
+                var dialog = new DeleteSongConfirmationWindow($"Are you sure you want to delete '{fileNameWithoutExtension}'?");
+                dialog.Owner = this;
+                dialog.ShowDialog();
+
+                if (dialog.IsConfirmed)
+                {
+                    UploadedSongList.Items.Remove(fileNameWithoutExtension);
+                    string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
+                    string audioFile_mp3 = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".mp3");
+                    string audioFile_wav = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".wav");
+
+                    string? audioFilePath = null;
+
+                    if (File.Exists(audioFile_mp3))
+                    {
+                        audioFilePath = audioFile_mp3;
+                    }
+                    if (File.Exists(audioFile_wav))
+                    {
+                        audioFilePath = audioFile_wav;
+                    }
+
+                    if (audioFilePath != null)
+                    {
+                        File.Delete(audioFilePath);
+                        RefreshSongsInUI();
+                    }
+
+                }
+            }
+        }
+        private void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button folderButton && folderButton.Tag is Song song)
+            {
+                // Retrieve the file name from the Song object's Name property
+                string? fileNameWithoutExtension = song.Name;
+
+                // Construct the full file path
+                string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
+                string audioFile_mp3 = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".mp3");
+                string audioFile_wav = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".wav");
+
+                string? audioFilePath = null;
+
+                if (File.Exists(audioFile_mp3))
+                {
+                    audioFilePath = audioFile_mp3;
+                }
+                if (File.Exists(audioFile_wav))
+                {
+                    audioFilePath = audioFile_wav;
+                }
+
+                if (audioFilePath != null)
+                {
+                    // Use Process to open the file location with the file selected
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        Arguments = $"/select,\"{audioFilePath}\""
+                    };
+                    Process.Start(psi);
+                }
+                else
+                {
+                    MessageBox.Show("File not found in storage.");
+                }
+            }
+        }
+        private void SaveSongIndex()
+        {
+            Properties.Settings.Default.LastSelectedIndex = UploadedSongList.SelectedIndex;
+            Properties.Settings.Default.Save();
+        }
+        private void LoadSongIndex()
+        {
+            UploadedSongList.SelectionChanged -= PlaySelectedSong;
+
+            int SongIndex = Properties.Settings.Default.LastSelectedIndex;
+            if (SongIndex >= 0 && SongIndex < UploadedSongList.Items.Count)
+            {
+                UploadedSongList.SelectedIndex = SongIndex;
+            }
+
+            UploadedSongList.SelectionChanged += PlaySelectedSong;
+            isPlaying = false;
+        }
+        //--------------------------- Slider And Volume ------------------------------------
         private void SetSystemVolume(double volume)
         {
             // Helper method to set system volume
@@ -419,103 +530,8 @@ namespace Mei_Music
                 SetSystemVolume(slider.Value);
             }
         }
-        private void DeleteSong_Click(object sender, RoutedEventArgs e)
-        {
-           if (sender is Button deleteSong && deleteSong.Tag is Song song)
-            {
-                string? fileNameWithoutExtension = song.Name;
-
-                if (string.IsNullOrEmpty(fileNameWithoutExtension)) return; 
-
-                var dialog = new DeleteSongConfirmationWindow($"Are you sure you want to delete '{fileNameWithoutExtension}'?");
-                dialog.Owner = this;
-                dialog.ShowDialog();
-
-                if (dialog.IsConfirmed)
-                {
-                    UploadedSongList.Items.Remove(fileNameWithoutExtension);
-                    string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
-                    string audioFile_mp3 = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".mp3");
-                    string audioFile_wav = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".wav");
-
-                    string? audioFilePath = null;
-
-                    if (File.Exists(audioFile_mp3))
-                    {
-                        audioFilePath = audioFile_mp3;
-                    }
-                    if (File.Exists(audioFile_wav))
-                    {
-                        audioFilePath = audioFile_wav;
-                    }
-
-                    if (audioFilePath != null)
-                    {
-                        File.Delete(audioFilePath);
-                        RefreshSongsInUI();
-                    }
-
-                }
-            }
-        }
-        private void OpenFolder_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button folderButton && folderButton.Tag is Song song)
-            {
-                // Retrieve the file name from the Song object's Name property
-                string? fileNameWithoutExtension = song.Name;
-
-                // Construct the full file path
-                string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
-                string audioFile_mp3 = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".mp3");
-                string audioFile_wav = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".wav");
-
-                string? audioFilePath = null;
-               
-                if (File.Exists(audioFile_mp3))
-                {
-                    audioFilePath = audioFile_mp3;
-                }
-                if (File.Exists(audioFile_wav))
-                {
-                    audioFilePath = audioFile_wav;
-                }
-
-                if (audioFilePath != null) {
-                    // Use Process to open the file location with the file selected
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = "explorer.exe",
-                        Arguments = $"/select,\"{audioFilePath}\""
-                    };
-                    Process.Start(psi);
-                }
-                else
-                {
-                    MessageBox.Show("File not found in storage.");
-                }
-            }
-        }
-        private void SaveSongIndex()
-        {
-            Properties.Settings.Default.LastSelectedIndex = UploadedSongList.SelectedIndex;
-            Properties.Settings.Default.Save();
-        }
-        private void LoadSongIndex()
-        {
-            UploadedSongList.SelectionChanged -= PlaySelectedSong;
-
-            int SongIndex = Properties.Settings.Default.LastSelectedIndex;
-            if (SongIndex >= 0 && SongIndex < UploadedSongList.Items.Count)
-            {
-                UploadedSongList.SelectedIndex = SongIndex;
-            }
-
-            UploadedSongList.SelectionChanged += PlaySelectedSong;
-            isPlaying = false;
-        }
-
         //----------------------------------------------------------------------------------
+        
 
 
         //------------------------- Sorting Playlist Implementation ------------------------
