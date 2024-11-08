@@ -9,6 +9,7 @@ namespace Mei_Music
     /// </summary>
     public partial class App : Application
     {
+        
     }
 
 }

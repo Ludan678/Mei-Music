@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Mei Music" Height="500" Width="900"
         Deactivated="Window_Deactivated"
-         WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="CanResizeWithGrip"
         Background="#1E1E1E">
@@ -31,6 +31,35 @@
                     <Setter Property="BorderThickness" Value="0"/>
                 </Trigger>
             </Style.Triggers>
+        </Style>
+
+        <!-- Style for Play Song Buttons-->
+        <Style x:Key="PlaySongButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="1" 
+                        CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover State -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="DarkGray"/>
+                                <!-- Custom hover color -->
+                                <Setter Property="BorderBrush" Value="#FFB0B0B0"/>
+                                <!-- Custom hover border color -->
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Style for dropdown list items with hover effect -->
@@ -205,20 +234,28 @@
                         <ListBox x:Name="UploadedSongList" 
                                  HorizontalContentAlignment="Stretch" 
                                  Height="auto"
-                                 SelectionChanged="PlaySelectedSong">
+                                 SelectionChanged="PlaySelectedSong"
+                                 ItemContainerStyle="{StaticResource SongListStyle}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid HorizontalAlignment="Stretch">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
+                                        <!-- Index Column -->
+                                        <TextBlock Text="{Binding Index}" 
+                                            VerticalAlignment="Center" 
+                                            Margin="5,0,0,0" 
+                                            Grid.Column="0"/>
+
                                         <!-- Song Name -->
-                                        <TextBlock Text="{Binding}" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="15,0,10,0" 
-                                                   Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Name}" 
+                                            VerticalAlignment="Center" 
+                                            Margin="5,0,10,0" 
+                                            Grid.Column="1"/>
 
                                         <!-- Delete Button -->
                                         <Button Content="❌" 
@@ -229,8 +266,9 @@
                                             Click="DeleteSong_Click" 
                                             Tag="{Binding}" 
                                             Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="1"
+                                            Grid.Column="2"
                                             Margin="0,0,10,0"/>
+                                        
                                         <!-- Folder Button -->
                                         <Button Content="📂" 
                                             Width="17" 
@@ -240,14 +278,13 @@
                                             Click="OpenFolder_Click" 
                                             Tag="{Binding}" 
                                             Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="1"
+                                            Grid.Column="2"
                                             Margin="0,0,37,0"/>
 
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-
 
                     </StackPanel>
                 </Border>
@@ -265,19 +302,30 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Previous Song Button-->
-                    <Button Grid.Column="0" Width="40"  Content="⏮" FontSize="25" 
-                            Margin="25,0,5,0" HorizontalAlignment="Left" 
-                            Style="{StaticResource CustomButtonStyle}"/>
+                    <Button Grid.Column="0" Width="50" FontSize="25" 
+                            Margin="20,0,-5,0" HorizontalAlignment="Left" 
+                            RenderOptions.BitmapScalingMode="Fant"
+                            Style="{StaticResource PlaySongButtonStyle}">
+                        <Image Source="/Resources/Images/previous_button.png" Width="25" Height="25"/>
+                    </Button>
 
                     <!-- Stop Song Button-->
-                    <Button Grid.Column="1" Width="50" Padding="0,0,0,1" Content="⏸️" FontSize="33" 
+                    <Button Grid.Column="1" Width="50" Padding="0,0,0,1" FontSize="33" 
+                            x:Name="StopSongButton"
+                            Click="StopSongClicked"
                             Margin="10,0,10,0"
-                            HorizontalAlignment="Center" Style="{StaticResource CustomButtonStyle}"/>
+                            RenderOptions.BitmapScalingMode="Fant"
+                            HorizontalAlignment="Center" Style="{StaticResource PlaySongButtonStyle}">
+                        <Image Source="/Resources/Images/pause_button.png" Width="35" Height="35"/>
+                    </Button>
 
                     <!-- Next Song Button-->
-                    <Button Grid.Column="2" Width="40"  Content="⏭" FontSize="25" 
-                            Margin="5,0,20,0" HorizontalAlignment="Right"
-                            Style="{StaticResource CustomButtonStyle}"/>
+                    <Button Grid.Column="2" Width="50" FontSize="25" 
+                            Margin="-5,0,20,0" HorizontalAlignment="Right"
+                            RenderOptions.BitmapScalingMode="Fant"
+                            Style="{StaticResource PlaySongButtonStyle}">
+                        <Image Source="/Resources/Images/next_button.png" Width="25" Height="25"/>
+                    </Button>
 
                     <Grid Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Stretch">
                         <Grid.ColumnDefinitions>

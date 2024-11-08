@@ -244,5 +244,19 @@
             <Setter Property="Template" Value="{StaticResource SliderHorizontal}"/>
         </Style>
 
+         <Style x:Key="SongListStyle" TargetType="ListBoxItem">
+            <!-- Default Item Style -->
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="Black"/>
+
+            <!-- Selected Item Style -->
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Silver"/> <!-- Light blue background -->
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </Application.Resources>
 </Application>
