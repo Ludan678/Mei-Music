@@ -57,7 +57,7 @@ namespace Mei_Music
         }
 
         //------------------------- Add Audio Implementation -------------------------------
-        private void AddSongToList(string name)
+        internal void AddSongToList(string name)
         {
             var song = new Song
             {
@@ -108,16 +108,17 @@ namespace Mei_Music
                 else if (fileExtension == ".wav" || fileExtension == ".mp3")
                 {
                     string audioFilePath = System.IO.Path.Combine(outputDirectory, System.IO.Path.GetFileName(selectedFile));
-                    AddFileToUI(selectedFile);
+                    AddFileToUI(audioFilePath);
                     File.Copy(selectedFile, audioFilePath, overwrite: true); // Copy file to output directory
                 }
             }
         }
         private void SearchThroughURL_Click(object sender, RoutedEventArgs e)
         {
-
+            SearchThroughURLWindow window = new SearchThroughURLWindow(this);
+            window.Show();
         }
-        private string ConvertVideoToAudio(string videoFilePath) //perform conversion from video to audio
+        internal string ConvertVideoToAudio(string videoFilePath) //perform conversion from video to audio
         {
             try
             {
@@ -155,7 +156,7 @@ namespace Mei_Music
                 throw;
             }
         }
-        private void AddFileToUI(string filePath)
+        internal void AddFileToUI(string filePath)
         {
             string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(filePath); //get file name
 
@@ -241,7 +242,6 @@ namespace Mei_Music
 
 
         //-------------------------  Song Functionality Implementation ---------------------
-       
         private void PlaySelectedSong(object sender, SelectionChangedEventArgs? e)
         {
             //click to play a song functionality
