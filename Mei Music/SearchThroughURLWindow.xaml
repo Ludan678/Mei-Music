@@ -75,5 +75,22 @@
         <!-- Search Results Display (optional) -->
         <ListBox x:Name="SearchResultsListBox" Grid.Row="2" Margin="10"/>
 
+        <!-- Progress bar at the bottom -->
+        <ProgressBar x:Name="ProcessingProgressBar"
+                    Height="20"
+                    Grid.Row="2"
+                    Margin="10"
+                    IsIndeterminate="True"
+                    Visibility="Collapsed" />
+
+        <TextBlock x:Name="StatusText"
+                HorizontalAlignment="Center"
+                Grid.Row="2"
+                VerticalAlignment="Bottom"
+                Margin="10"
+                Text=""
+                Visibility="Collapsed" />
+       
+
     </Grid>
 </Window>
