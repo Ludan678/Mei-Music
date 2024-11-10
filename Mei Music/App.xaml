@@ -275,5 +275,28 @@
 
         <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}"/>
 
+        <Style TargetType="ProgressBar" x:Key="RoundedProgressBar">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}"
+                            CornerRadius="10" 
+                            Height="{TemplateBinding Height}">
+                            <Grid>
+                                <!-- Background Bar -->
+                                <Rectangle Fill="{TemplateBinding Background}"
+                                       RadiusX="10" RadiusY="10"/>
+                                <!-- Progress Fill with Rounded Corners -->
+                                <Rectangle x:Name="PART_Indicator" 
+                                       Fill="{TemplateBinding Foreground}"
+                                       RadiusX="10" RadiusY="10"
+                                       HorizontalAlignment="Left"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Application.Resources>
 </Application>

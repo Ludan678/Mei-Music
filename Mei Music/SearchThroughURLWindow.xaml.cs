@@ -43,6 +43,9 @@ namespace Mei_Music
         }
         private void SearchButton_Click(object sender, RoutedEventArgs e)
         {
+            ProcessingProgressBar.Visibility = Visibility.Visible;
+            ProcessingText.Visibility = Visibility.Visible;
+
             string videoUrl = SearchTextBox.Text.Trim();
             if (string.IsNullOrEmpty(videoUrl))
             {
@@ -122,6 +125,8 @@ namespace Mei_Music
                 ConvertVideoToAudio(finalVideoPath);
             }
 
+            ProcessingProgressBar.Visibility = Visibility.Collapsed;
+            ProcessingText.Visibility = Visibility.Collapsed;
         }
         private void DownloadVideo(string videoUrl, string downloadDirectory) // Download video from URL
         {
@@ -192,8 +197,6 @@ namespace Mei_Music
                 MessageBox.Show($"An error occurred during download: {ex.Message}");
             }
         }
-
-        // Monitor the directory for file limit in real-time
         private async Task MonitorDirectoryForFileLimit(string directory, Process process, int maxFiles)
         {
             try
@@ -300,7 +303,6 @@ namespace Mei_Music
                 return null;
             }
         }
-
         private string ConvertVideoToAudio(string videoFilePath) //perform conversion from video to audio
         {
             try

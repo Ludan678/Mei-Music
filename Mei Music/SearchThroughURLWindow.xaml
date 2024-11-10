@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d"
         WindowStyle="None"
-        Title="Search" Height="90" Width="800">
+        Title="Search" Height="95" Width="800">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
@@ -17,6 +17,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -73,23 +74,28 @@
         </StackPanel>
 
         <!-- Search Results Display (optional) -->
-        <ListBox x:Name="SearchResultsListBox" Grid.Row="2" Margin="10"/>
+        <ListBox x:Name="SearchResultsListBox" Width="750"  Grid.Row="2" Margin="0,9,0,5"/>
 
         <!-- Progress bar at the bottom -->
         <ProgressBar x:Name="ProcessingProgressBar"
-                    Height="20"
-                    Grid.Row="2"
-                    Margin="10"
-                    IsIndeterminate="True"
-                    Visibility="Collapsed" />
+            VerticalAlignment="Center"
+            Height="17"
+            Grid.Row="3"
+            Margin="10,0,10,10"
+            Value="100"
+            Background="#32a852"
+            Style="{StaticResource RoundedProgressBar}"
+            Visibility="Collapsed" />
 
-        <TextBlock x:Name="StatusText"
-                HorizontalAlignment="Center"
-                Grid.Row="2"
-                VerticalAlignment="Bottom"
-                Margin="10"
-                Text=""
-                Visibility="Collapsed" />
+        <TextBlock x:Name="ProcessingText"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Grid.Row="3"
+            Margin="10,0,10,10"
+            Text="Processing..."
+            FontStyle="Italic"
+            FontSize="12"
+            Visibility="Collapsed" />
        
 
     </Grid>
