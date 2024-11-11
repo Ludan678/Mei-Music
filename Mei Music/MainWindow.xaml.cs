@@ -9,12 +9,18 @@ using System.Windows.Threading;
 using AudioSwitcher.AudioApi.CoreAudio;
 using Mei_Music.Properties;
 using System.Windows.Media.Imaging;
+using System.Windows.Controls.Primitives;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Collections.ObjectModel;
+
 
 
 
 namespace Mei_Music
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private bool isPlaying = false;
         private bool isDragging = false;
@@ -22,10 +28,53 @@ namespace Mei_Music
         private MediaPlayer mediaPlayer = new MediaPlayer();
         private DispatcherTimer timer;
         private CoreAudioDevice? defaultPlaybackDevice;
+
+        private Song? currentSong;
+        public Song? CurrentSong
+        {
+            get => currentSong;
+            set
+            {
+                currentSong = value;
+                if (currentSong != null)
+                {
+                    mediaPlayer.Volume = currentSong.Volume;
+                }
+                OnPropertyChanged(nameof(CurrentSong));
+            }
+        }
+        public ObservableCollection<Song> Songs { get; set; } = new ObservableCollection<Song>();
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private string songDataFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "songData.json");
+
         public MainWindow()
         {
             InitializeComponent();
 
+            string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
+            Directory.CreateDirectory(audioDirectory);
+
+            LoadSongData();
+            UploadedSongList.ItemsSource = Songs;
+            RefreshSongsInUI();
+            LoadSongIndex();
+
+            UpdateSongIndexes();
+
+
+
+            if (UploadedSongList.SelectedIndex >= 0 && UploadedSongList.SelectedIndex < Songs.Count)
+            {
+                CurrentSong = Songs[UploadedSongList.SelectedIndex];
+                mediaPlayer.Volume = CurrentSong.Volume / 100.0;
+            }
+
+            InitializeMediaPlayer();
+            this.PreviewMouseDown += OnMainWindowPreviewMouseDown; //tracks Position of mouse
+        }
+
+        private void InitializeMediaPlayer()
+        {
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
@@ -40,20 +89,37 @@ namespace Mei_Music
             {
                 VolumeSlider.Value = defaultPlaybackDevice.Volume; // Set initial value from system volume
             }
-
-            string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
-            Directory.CreateDirectory(audioDirectory);
-
-            RefreshSongsInUI();
-            LoadSongIndex();
-
-            this.PreviewMouseDown += OnMainWindowPreviewMouseDown; //tracks Position of mouse
         }
-        //------------------------- Data Structure -----------------------------------------
-        public class Song
+        protected void OnPropertyChanged(string propertyName)
         {
-            public string? Index { get; set; }   
-            public string? Name { get; set; }     
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        //------------------------- Data Structure -----------------------------------------
+        public class Song : INotifyPropertyChanged
+        {
+            public string? Index { get; set; }
+            public string? Name { get; set; }
+
+            private double volume = 50;
+            public double Volume
+            {
+                get => volume;
+                set
+                {
+                    if (volume != value)
+                    {
+                        volume = value;
+                        OnPropertyChanged(nameof(Volume));
+                    }
+                }
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
         //------------------------- Add Audio Implementation -------------------------------
@@ -61,23 +127,22 @@ namespace Mei_Music
         {
             var song = new Song
             {
-                Index = (UploadedSongList.Items.Count + 1).ToString("D2"),
+                Index = (Songs.Count + 1).ToString("D2"),
                 Name = name
             };
 
-            UploadedSongList.Items.Add(song);
+            Songs.Add(song);
+            UpdateSongData();
         }
         private void RemoveSongFromList(string name)
         {
             // Find the song with the specified name in the list
-            var songToRemove = UploadedSongList.Items.OfType<Song>().FirstOrDefault(song => song.Name == name);
+            var songToRemove = Songs.OfType<Song>().FirstOrDefault(song => song.Name == name);
 
             if (songToRemove != null)
             {
-                UploadedSongList.Items.Remove(songToRemove);
-
-                // Update indices for all remaining songs to maintain sequential numbering
-                //UpdateSongIndices();
+                Songs.Remove(songToRemove);
+                UpdateSongData();
             }
         }
         private void UploadFromComputer_Click(object sender, RoutedEventArgs e)
@@ -160,7 +225,7 @@ namespace Mei_Music
         {
             string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(filePath); //get file name
 
-            bool isDuplicate = UploadedSongList.Items
+            bool isDuplicate = Songs
                                 .OfType<Song>()
                                 .Any(song => song.Name == fileNameWithoutExtension); 
 
@@ -196,7 +261,7 @@ namespace Mei_Music
             RemoveSongFromList(fileNameWithoutExtension);
             AddSongToList(fileNameWithoutExtension);
         }
-        private void PromptForNewName(string filePath)
+        private string PromptForNewName(string filePath)
         {
             string originalName = System.IO.Path.GetFileNameWithoutExtension(filePath);
             string outputDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
@@ -215,6 +280,7 @@ namespace Mei_Music
                 if (File.Exists(newFilePath))
                 {
                     MessageBox.Show($"A file named \"{newName}\" already exists in the playlist. Please choose a different name.", "Duplicate Name", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return originalName;
                 }
                 else
                 {
@@ -223,8 +289,10 @@ namespace Mei_Music
 
                     // Add the new name to the playlist in the UI
                     AddSongToList(newName);
+                    return newName;
                 }
             }
+            return originalName; // Return original name if no change
         }
         private void PlusButton_Click(object sender, RoutedEventArgs e)
         {
@@ -248,9 +316,15 @@ namespace Mei_Music
             if (UploadedSongList.SelectedItem != null)
             {
                 var selectedSong = UploadedSongList.SelectedItem as Song;
-                string? selectedFileName = selectedSong?.Name;
+                CurrentSong = selectedSong;
 
-                // Build the full path to the audio file in the local storage folder
+                if (CurrentSong != null)
+                {
+                    mediaPlayer.Volume = CurrentSong.Volume;
+                    UpdateSongVolumeSlider(CurrentSong.Volume * 100);  // Set slider based on saved volume
+                }
+
+                string? selectedFileName = selectedSong?.Name;
                 string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
                 string mp3FilePath = System.IO.Path.Combine(audioDirectory, selectedFileName + ".mp3");
                 string wavFilePath = System.IO.Path.Combine(audioDirectory, selectedFileName + ".wav");
@@ -267,6 +341,8 @@ namespace Mei_Music
                 {
                     mediaPlayer.Stop();
                     mediaPlayer.Open(new Uri(audioFilePath));
+                    mediaPlayer.Volume = selectedSong.Volume / 100.0;
+
                     mediaPlayer.Play();
                     isPlaying = true;
                     SaveSongIndex();
@@ -277,13 +353,29 @@ namespace Mei_Music
                 }
             }
         }
+        private T? FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T element && element.Name == name)
+                {
+                    return element;
+                }
+
+                var result = FindVisualChild<T>(child, name);
+                if (result != null)
+                    return result;
+            }
+            return null;
+        }
         private void PreviousSongClicked(object sender, RoutedEventArgs e)
         {
             int current_index = UploadedSongList.SelectedIndex;
             int previous_index = current_index - 1;
             if(previous_index < 0)
             {
-                previous_index = UploadedSongList.Items.Count - 1;
+                previous_index = Songs.Count - 1;
             }
             UploadedSongList.SelectedIndex = previous_index;
             SaveSongIndex();
@@ -323,7 +415,7 @@ namespace Mei_Music
         private void NextSongClicked(object sender, RoutedEventArgs e)
         {
             int current_index = UploadedSongList.SelectedIndex;
-            int next_index = (current_index + 1) % UploadedSongList.Items.Count;
+            int next_index = (current_index + 1) % Songs.Count;
             UploadedSongList.SelectedIndex = next_index;
             SaveSongIndex();
         }
@@ -339,10 +431,10 @@ namespace Mei_Music
         }
         private void MediaPlayer_MediaEnded(object? sender, EventArgs e)
         {
-            if (UploadedSongList.Items.Count == 0)
+            if (Songs.Count == 0)
                 return;
             int current_index = UploadedSongList.SelectedIndex;
-            int next_index = (current_index + 1) % UploadedSongList.Items.Count;
+            int next_index = (current_index + 1) % Songs.Count;
             UploadedSongList.SelectedIndex = next_index;
             PlaySelectedSong(this, null);
         }
@@ -370,29 +462,40 @@ namespace Mei_Music
 
                 if (dialog.IsConfirmed)
                 {
-                    UploadedSongList.Items.Remove(fileNameWithoutExtension);
-                    string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
-                    string audioFile_mp3 = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".mp3");
-                    string audioFile_wav = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".wav");
-
-                    string? audioFilePath = null;
-
-                    if (File.Exists(audioFile_mp3))
+                    var songToRemove = Songs.FirstOrDefault(song => song.Name == fileNameWithoutExtension);
+                    if (songToRemove != null)
                     {
-                        audioFilePath = audioFile_mp3;
+                        Songs.Remove(songToRemove); // Removes directly from the ObservableCollection
+                        UpdateSongData();
                     }
-                    if (File.Exists(audioFile_wav))
-                    {
-                        audioFilePath = audioFile_wav;
-                    }
-
-                    if (audioFilePath != null)
-                    {
-                        File.Delete(audioFilePath);
-                        RefreshSongsInUI();
-                    }
+                    DeleteSong(fileNameWithoutExtension);
 
                 }
+            }
+        }
+        private void DeleteSong(string fileNameWithoutExtension)
+        {
+            if (string.IsNullOrEmpty(fileNameWithoutExtension)) return;
+
+            string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
+            string audioFile_mp3 = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".mp3");
+            string audioFile_wav = System.IO.Path.Combine(audioDirectory, fileNameWithoutExtension + ".wav");
+
+            string? audioFilePath = null;
+
+            if (File.Exists(audioFile_mp3))
+            {
+                audioFilePath = audioFile_mp3;
+            }
+            if (File.Exists(audioFile_wav))
+            {
+                audioFilePath = audioFile_wav;
+            }
+
+            if (audioFilePath != null)
+            {
+                File.Delete(audioFilePath);
+                RefreshSongsInUI();
             }
         }
         private void OpenFolder_Click(object sender, RoutedEventArgs e)
@@ -434,6 +537,31 @@ namespace Mei_Music
                 }
             }
         }
+        private void RenameSong_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button renameButton && renameButton.Tag is string fileName)
+            {
+                // Define the output directory
+                string outputDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
+
+                // Construct the full path to the file
+                string filePath = System.IO.Path.Combine(outputDirectory, fileName + ".mp3");
+
+                // Call PromptForNewName with the constructed file path
+                string newFileName = PromptForNewName(filePath);
+
+                // Check if the new name is different from the old name
+                if (!string.IsNullOrEmpty(newFileName) && newFileName != fileName)
+                {
+                    // Delete the old song file only if the name has changed
+                    DeleteSong(fileName);
+                }
+            }
+            else
+            {
+                MessageBox.Show("File name not found in the Tag property.");
+            }
+        }
         private void SaveSongIndex()
         {
             Properties.Settings.Default.LastSelectedIndex = UploadedSongList.SelectedIndex;
@@ -444,7 +572,7 @@ namespace Mei_Music
             UploadedSongList.SelectionChanged -= PlaySelectedSong;
 
             int SongIndex = Properties.Settings.Default.LastSelectedIndex;
-            if (SongIndex >= 0 && SongIndex < UploadedSongList.Items.Count)
+            if (SongIndex >= 0 && SongIndex < Songs.Count)
             {
                 UploadedSongList.SelectedIndex = SongIndex;
             }
@@ -452,6 +580,7 @@ namespace Mei_Music
             UploadedSongList.SelectionChanged += PlaySelectedSong;
             isPlaying = false;
         }
+
         //--------------------------- Slider And Volume ------------------------------------
         private void SetSystemVolume(double volume)
         {
@@ -530,14 +659,43 @@ namespace Mei_Music
                 SetSystemVolume(slider.Value);
             }
         }
+        private void SongVolumeButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (sender is Button button && button.DataContext is Song song)
+            {
+               
+                // Initialize SongVolumeController with the correct volume
+                var songVolumeController = new SongVolumeController(song.Volume)
+                {
+                    Owner = this,
+                    VolumeChangedCallback = newVolume =>
+                    {
+                        // Update the song’s volume
+                        song.Volume = newVolume;
+
+                        // Apply to mediaPlayer if this song is playing
+                        if (mediaPlayer.Source?.OriginalString.Contains(song.Name) == true)
+                        {
+                            mediaPlayer.Volume = newVolume / 100.0;
+                        }
+
+                        // Save updated song data
+                        SaveSongData(Songs.ToList());
+                    }
+                };
+
+                songVolumeController.ShowDialog();
+            }
+        }
         //----------------------------------------------------------------------------------
-        
+
 
 
         //------------------------- Sorting Playlist Implementation ------------------------
         private void SortAlphabetically_Click(object sender, RoutedEventArgs e)
         {
-            var sortedItems = UploadedSongList.Items
+            var sortedItems = Songs
                              .OfType<Song>()
                              .OrderBy(song => song.Name)
                              .ToList();
@@ -548,7 +706,7 @@ namespace Mei_Music
         {
             string outputDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
 
-            var sortedItems = UploadedSongList.Items
+            var sortedItems = Songs
                              .OfType<Song>()
                              .OrderByDescending(item =>
                              {
@@ -569,15 +727,16 @@ namespace Mei_Music
         }
         private void RefreshPlaylist(List<Song> sortedItems)
         {
-            UploadedSongList.Items.Clear();
+            Songs.Clear();
 
             int count = 1;
             foreach (var song in sortedItems)
             {
                 song.Index = count.ToString("D2");  // Update index based on sorted order
-                UploadedSongList.Items.Add(song);
+                Songs.Add(song);
                 count++;
             }
+            UpdateSongData();
         }
         private void RefreshSongsInUI()
         {
@@ -645,12 +804,13 @@ namespace Mei_Music
                 .Where(file => System.IO.Path.GetExtension(file).ToLower() == ".mp3" || System.IO.Path.GetExtension(file).ToLower() == ".wav")
                 .Select(file => System.IO.Path.GetFileNameWithoutExtension(file)));
 
-            for (int i = UploadedSongList.Items.Count - 1; i >= 0; i--)
+            for (int i = Songs.Count - 1; i >= 0; i--)
             {
-                string? fileNameInUI = UploadedSongList.Items[i]?.ToString();
-                if (fileNameInUI != null && !filesInFolder.Contains(fileNameInUI))
+                string? songName = Songs[i]?.Name;
+                if (songName != null && !filesInFolder.Contains(songName))
                 {
-                    UploadedSongList.Items.RemoveAt(i);
+                    Songs.RemoveAt(i);
+                    UpdateSongData();
                 }
             }
 
@@ -661,19 +821,20 @@ namespace Mei_Music
                 if (extension == ".mp3" || extension == ".wav")
                 {
                     string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(filePath);
-                    bool fileAlreadyInUI = false;
-                    foreach (var item in UploadedSongList.Items)
+                    var existingSong = Songs.FirstOrDefault(s => s.Name == fileNameWithoutExtension);
+
+                    // If song already exists, skip adding a new one to preserve data
+                    if (existingSong != null) continue;
+
+                    // Create a new song object only if it doesn't already exist
+                    var newSong = new Song
                     {
-                        if (item.ToString() == fileNameWithoutExtension)
-                        {
-                            fileAlreadyInUI = true;
-                            break;
-                        }
-                    }
-                    if (!fileAlreadyInUI)
-                    {
-                        AddFileToUI(filePath);
-                    }
+                        Name = fileNameWithoutExtension,
+                        Volume = 50 // Set a default value if the volume is not in the loaded data
+                    };
+
+                    Songs.Add(newSong);
+                    UpdateSongData();
                 }
             }
         }
@@ -714,6 +875,75 @@ namespace Mei_Music
                 SortButton.IsEnabled = true;
             }
         }
+        private void SaveSongData(List<Song> songs)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(songDataFilePath));
+                string json = JsonConvert.SerializeObject(songs, Formatting.Indented);
+                File.WriteAllText(songDataFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving song data: {ex.Message}");
+            }
+        }
+        private void LoadSongData()
+        {
+            try
+            {
+                if (File.Exists(songDataFilePath))
+                {
+                    string json = File.ReadAllText(songDataFilePath);
+                    var loadedSongs = JsonConvert.DeserializeObject<List<Song>>(json) ?? new List<Song>();
+
+                    // Clear the Songs collection
+                    Songs.Clear();
+
+                    foreach (var loadedSong in loadedSongs)
+                    {
+                        // Create a new Song object and set its properties
+                        var song = new Song
+                        {
+                            Index = loadedSong.Index,
+                            Name = loadedSong.Name,
+                            Volume = (loadedSong.Volume >= 0 && loadedSong.Volume <= 100) ? loadedSong.Volume : 50 // Set default if volume is invalid
+                        };
+
+                        // Add the newly created Song object to the Songs collection
+                        Songs.Add(song);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading song data: {ex.Message}");
+            }
+        }
+        private void UpdateSongData()
+        {
+            UpdateSongIndexes();
+            SaveSongData(Songs.ToList());  // Save the current Songs collection to the JSON file
+            LoadSongData();                // Reload Songs collection from the updated JSON file
+        }
+        private void UpdateSongIndexes()
+        {
+            int indexCounter = 1;
+            foreach (var song in Songs)
+            {
+                song.Index = indexCounter.ToString("D2"); // Set or update the index property
+                indexCounter++;
+            }
+        }
+        private void UpdateSongVolumeSlider(double? volume)
+        {
+            // Attempt to locate the SongVolumeSlider dynamically if it’s not directly accessible
+            var songVolumeSlider = FindName("SongVolumeSlider") as Slider;
+            if (songVolumeSlider != null)
+            {
+                songVolumeSlider.Value = volume ?? 50;
+            }
+        }
 
         //------------------------- Icon bar implementation --------------------------------
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -737,7 +967,16 @@ namespace Mei_Music
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             SaveSongIndex(); // Save before closing
+            SaveSongData(Songs.ToList());
+
             this.Close();
+        }
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+
+            SaveSongIndex();
+            SaveSongData(Songs.ToList());
         }
 
         //----------------------------------------------------------------------------------

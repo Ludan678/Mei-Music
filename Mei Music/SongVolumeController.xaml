@@ -1,0 +1,29 @@
+﻿<Window x:Class="Mei_Music.SongVolumeController"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Mei_Music"
+        Title="Song Volume Control" Height="120" Width="300"
+        WindowStartupLocation="CenterOwner">
+    <Grid>
+        <TextBlock Text="Adjust Song Volume" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"/>
+        <Slider x:Name="SongVolumeSlider"
+                Minimum="0"
+                Maximum="100"
+                Value="{Binding Volume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                ToolTip="Adjust Volume"
+                VerticalAlignment="Center" 
+                HorizontalAlignment="Center" 
+                Margin="0,15,0,0"
+                Width="220" 
+                ValueChanged="SongVolumeSlider_ValueChanged"
+                IsSelectionRangeEnabled="True"
+                SelectionStart="0"
+                SelectionEnd="{Binding Value, ElementName=SongVolumeSlider}"
+                Style="{DynamicResource SongProgressCustomSlider}"
+                MouseMove="Slider_MouseMove"
+                PreviewMouseLeftButtonDown="Slider_PreviewMouseLeftButtonDown"
+                PreviewMouseLeftButtonUp="Slider_PreviewMouseLeftButtonUp"/>   
+    </Grid>
+</Window>

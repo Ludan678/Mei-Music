@@ -135,6 +135,7 @@
 
                             <!-- Upload Button-->
                             <Button x:Name="PlusButton"
+                                    ToolTip="Upload Audio"
                                     FontSize="25"
                                     Width="25"
                                     Height="25"
@@ -167,6 +168,7 @@
 
                             <!-- Refresh Button -->
                             <Button x:Name="RefreshButton" 
+                                    ToolTip="Refresh List"
                                     FontSize="20"
                                     Height="25"
                                     Width="25"
@@ -183,6 +185,7 @@
 
                             <!-- Sort Button -->
                             <Button x:Name="SortButton" 
+                                    ToolTip="Sort List"
                                     Content="↑↓" 
                                     Width="25" 
                                     Height="25" 
@@ -237,20 +240,36 @@
                                             Margin="5,0,10,0" 
                                             Grid.Column="1"/>
 
-                                        <!-- Delete Button -->
-                                        <Button Content="❌" 
+                                        <!-- Rename Button -->
+                                        <Button Content="🖊" 
+                                            ToolTip="Rename"
                                             Width="17" 
                                             Height="17" 
                                             VerticalAlignment="Center" 
                                             HorizontalAlignment="Right"
-                                            Click="DeleteSong_Click" 
-                                            Tag="{Binding}" 
+                                            Click="RenameSong_Click" 
+                                            Tag="{Binding Name}"
                                             Style="{StaticResource CustomButtonStyle}"
                                             Grid.Column="2"
-                                            Margin="0,0,10,0"/>
-                                        
+                                            Margin="0,0,72,0"/>
+
+                                        <!-- Volume Button -->
+                                        <Button x:Name="SongVolumeButton" 
+                                            ToolTip="Change volume"
+                                            Content="🔊" 
+                                            Width="17" 
+                                            Height="17" 
+                                            VerticalAlignment="Center" 
+                                            HorizontalAlignment="Right"
+                                            Click="SongVolumeButton_Click" 
+                                            Tag="{Binding Name}"
+                                            Style="{StaticResource CustomButtonStyle}"
+                                            Grid.Column="2"
+                                            Margin="0,0,50,0"/>
+
                                         <!-- Folder Button -->
                                         <Button Content="📂" 
+                                            ToolTip="Open path"
                                             Width="17" 
                                             Height="17" 
                                             VerticalAlignment="Center" 
@@ -259,7 +278,20 @@
                                             Tag="{Binding}" 
                                             Style="{StaticResource CustomButtonStyle}"
                                             Grid.Column="2"
-                                            Margin="0,0,37,0"/>
+                                            Margin="0,0,27,0"/>
+                                        
+                                        <!-- Delete Button -->
+                                        <Button Content="❌" 
+                                            ToolTip="Delete"
+                                            Width="17" 
+                                            Height="17" 
+                                            VerticalAlignment="Center" 
+                                            HorizontalAlignment="Right"
+                                            Click="DeleteSong_Click" 
+                                            Tag="{Binding}" 
+                                            Style="{StaticResource CustomButtonStyle}"
+                                            Grid.Column="2"
+                                            Margin="0,0,5,0"/>
 
                                     </Grid>
                                 </DataTemplate>
