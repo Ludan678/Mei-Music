@@ -126,10 +126,16 @@
             </Border>
 
             <!-- Main Content on the Right -->
-            <StackPanel Grid.Column="1" Background="#ebecf0">
+            <Grid Grid.Column="1" Background="#ebecf0" VerticalAlignment="Stretch">
                 <Border>
-                    <StackPanel>
-                        <Grid>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="48"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
                             <!-- Playlist Label -->
                             <Label Content="Playlist" FontSize="15" HorizontalAlignment="Left"/>
 
@@ -209,16 +215,17 @@
                                     </StackPanel>
                                 </Border>
                             </Popup>
-
-
                         </Grid>
 
                         <!-- List Box for Uploaded Songs -->
                         <ListBox x:Name="UploadedSongList" 
-                                 HorizontalContentAlignment="Stretch" 
-                                 Height="auto"
-                                 SelectionChanged="PlaySelectedSong"
-                                 ItemContainerStyle="{StaticResource SongListStyle}">
+                                Grid.Row="1"
+                                HorizontalContentAlignment="Stretch" 
+                                VerticalContentAlignment="Stretch"
+                                ScrollViewer.CanContentScroll="False"
+                                SelectionChanged="PlaySelectedSong"
+                                Style="{StaticResource CustomListBox}"
+                                ItemContainerStyle="{StaticResource SongListStyle}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid HorizontalAlignment="Stretch">
@@ -230,79 +237,80 @@
 
                                         <!-- Index Column -->
                                         <TextBlock Text="{Binding Index}" 
-                                            VerticalAlignment="Center" 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="0"/>
+                                        VerticalAlignment="Center" 
+                                        Margin="5,0,0,0" 
+                                        Grid.Column="0"/>
 
                                         <!-- Song Name -->
                                         <TextBlock Text="{Binding Name}" 
-                                            VerticalAlignment="Center" 
-                                            Margin="5,0,10,0" 
-                                            Grid.Column="1"/>
+                                        VerticalAlignment="Center" 
+                                        Margin="5,0,10,0" 
+                                        Grid.Column="1"/>
 
                                         <!-- Rename Button -->
                                         <Button Content="🖊" 
-                                            ToolTip="Rename"
-                                            Width="17" 
-                                            Height="17" 
-                                            VerticalAlignment="Center" 
-                                            HorizontalAlignment="Right"
-                                            Click="RenameSong_Click" 
-                                            Tag="{Binding Name}"
-                                            Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="2"
-                                            Margin="0,0,72,0"/>
+                                        ToolTip="Rename"
+                                        Width="17" 
+                                        Height="17" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Right"
+                                        Click="RenameSong_Click" 
+                                        Tag="{Binding Name}"
+                                        Style="{StaticResource CustomButtonStyle}"
+                                        Grid.Column="2"
+                                        Margin="0,0,72,0"/>
 
                                         <!-- Volume Button -->
                                         <Button x:Name="SongVolumeButton" 
-                                            ToolTip="Change volume"
-                                            Content="🔊" 
-                                            Width="17" 
-                                            Height="17" 
-                                            VerticalAlignment="Center" 
-                                            HorizontalAlignment="Right"
-                                            Click="SongVolumeButton_Click" 
-                                            Tag="{Binding Name}"
-                                            Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="2"
-                                            Margin="0,0,50,0"/>
+                                        ToolTip="Change volume"
+                                        Content="🔊" 
+                                        Width="17" 
+                                        Height="17" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Right"
+                                        Click="SongVolumeButton_Click" 
+                                        Tag="{Binding Name}"
+                                        Style="{StaticResource CustomButtonStyle}"
+                                        Grid.Column="2"
+                                        Margin="0,0,50,0"/>
 
                                         <!-- Folder Button -->
                                         <Button Content="📂" 
-                                            ToolTip="Open path"
-                                            Width="17" 
-                                            Height="17" 
-                                            VerticalAlignment="Center" 
-                                            HorizontalAlignment="Right"
-                                            Click="OpenFolder_Click" 
-                                            Tag="{Binding}" 
-                                            Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="2"
-                                            Margin="0,0,27,0"/>
-                                        
+                                        ToolTip="Open path"
+                                        Width="17" 
+                                        Height="17" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Right"
+                                        Click="OpenFolder_Click" 
+                                        Tag="{Binding}" 
+                                        Style="{StaticResource CustomButtonStyle}"
+                                        Grid.Column="2"
+                                        Margin="0,0,27,0"/>
+
                                         <!-- Delete Button -->
                                         <Button Content="❌" 
-                                            ToolTip="Delete"
-                                            Width="17" 
-                                            Height="17" 
-                                            VerticalAlignment="Center" 
-                                            HorizontalAlignment="Right"
-                                            Click="DeleteSong_Click" 
-                                            Tag="{Binding}" 
-                                            Style="{StaticResource CustomButtonStyle}"
-                                            Grid.Column="2"
-                                            Margin="0,0,5,0"/>
+                                        ToolTip="Delete"
+                                        Width="17" 
+                                        Height="17" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Right"
+                                        Click="DeleteSong_Click" 
+                                        Tag="{Binding}" 
+                                        Style="{StaticResource CustomButtonStyle}"
+                                        Grid.Column="2"
+                                        Margin="0,0,5,0"/>
 
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+                     
 
-                    </StackPanel>
+                    </Grid>
                 </Border>
-            </StackPanel>
+            </Grid>
 
-            <Grid Grid.ColumnSpan="2" Height="48"  VerticalAlignment="Bottom" Background="#F5F5F5">
+            <Grid Grid.Row="2" Grid.ColumnSpan="2" Height="48"  VerticalAlignment="Bottom" Background="#F5F5F5">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>

@@ -49,6 +49,7 @@ namespace Mei_Music
 
         public MainWindow()
         {
+
             InitializeComponent();
 
             string audioDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mei Music", "playlist");
