@@ -3,7 +3,7 @@ App name: Mei Music
 Main Utility: Create your Own music SoundTrack of any kind 
 ----------------------------------------------------------------
 Made with: WPF, xaml + c#
-[This is only the source code, not the released sofeware product version. Can be opened with VS code. Once you run this once in vs code, you can find the released version under Mei Music/bin/release which can be used with saved user data.]
+[This is only the source code, not the released sofeware product version. Can be opened with Visual Studio Code. Once you run this once in Visual Studio Code, you can find the released version under Mei Music/bin/release which can be used with saved user data.]
 
 Description: a music app that turns any imported audio or videos files into a list of playable music playlists.
 Supported Files: video [mp4, mkv] audio [wav, mp3]
