@@ -18,8 +18,10 @@ Ways of importing:
 1. Upload from Computer
   - From the local Computer, simply by dropping in local files.
 2. Search Through URL [!Does not function 100% for all videos from all sites OR Video that is > 8 minutes!]
-  Working Sites: Bilibili, Youtube[part]
+  Working Sites: Bilibili, Youtube
   - A link tractor where you can insert a link to the video online, the software will auto detect the video file and convert it into an audio file and put it in the music list.
+
+![Image](https://github.com/user-attachments/assets/32934ee4-e04f-4021-bb2f-af49abe29ca5)
 
 The extraction of video uses the open source : yt-dlp.
 The conversion of video to audio uses the open source : ffmpeg.
