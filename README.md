@@ -30,8 +30,11 @@ The user will be prompt to enter a username for the loaded song.
 Usage:
 - Left Panel [currently empty for future implementations]
 - Traditional PREVIOUS, STOP, NEXT in music playlist. Works with looping.
-- Audio level slider
 - Song timer slider
+- Audio level slider
+- Audio level slider (individual song)
+
+![Image](https://github.com/user-attachments/assets/29a7da88-9542-4cdd-9824-a0c653e67b80)
 
 Playlist:
 click on the imported or extracted song to play it.
