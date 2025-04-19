@@ -8,6 +8,8 @@ Made with: WPF, xaml + c#
 Description: a music app that turns any imported audio or videos files into a list of playable music playlists.
 Supported Files: video [mp4, mkv] audio [wav, mp3]
 
+![Image](https://github.com/user-attachments/assets/789172da-1fe0-4d0c-87e4-ca88f24b8b68)
+
 More:
 Users are able to create a list of these imported sound files to use like a music app, where the music list can be played consecutively in loop in the background. 
 [Note: this means that this is not a app where you are searching for songs inside the app]
