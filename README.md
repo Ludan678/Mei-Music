@@ -11,10 +11,12 @@ Supported Files: video [mp4, mkv] audio [wav, mp3]
 ![Image](https://github.com/user-attachments/assets/789172da-1fe0-4d0c-87e4-ca88f24b8b68)
 
 More:
+----------------------------------------------------------------
 Users are able to create a list of these imported sound files to use like a music app, where the music list can be played consecutively in loop in the background. 
 [Note: this means that this is not a app where you are searching for songs inside the app]
 
 Ways of importing: 
+----------------------------------------------------------------
 1. Upload from Computer
   - From the local Computer, simply by dropping in local files.
 2. Search Through URL [!Does not function 100% for all videos from all sites OR Video that is > 8 minutes!]
@@ -28,6 +30,7 @@ The conversion of video to audio uses the open source : ffmpeg.
 The user will be prompt to enter a username for the loaded song.
 
 Usage:
+----------------------------------------------------------------
 - Left Panel [currently empty for future implementations]
 - Traditional PREVIOUS, STOP, NEXT in music playlist. Works with looping.
 - Song timer slider
@@ -37,6 +40,7 @@ Usage:
 ![Image](https://github.com/user-attachments/assets/29a7da88-9542-4cdd-9824-a0c653e67b80)
 
 Playlist:
+----------------------------------------------------------------
 click on the imported or extracted song to play it.
 Options attached to each song:
  -rename
@@ -45,10 +49,12 @@ Options attached to each song:
  -delete song button 
 
 Ordering:
+----------------------------------------------------------------
 1. order base on alphabet
 2. order base on modification date
 
 Refresh:
+----------------------------------------------------------------
 click this button if your loaded song did not show up
 
 Multiple Songs Importation:
